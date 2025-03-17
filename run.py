@@ -8,18 +8,20 @@ import logging
 from configs import TOKEN
 from handlers import admin_handlers
 from handlers.admin_handlers import admin_router
+from handlers.user_words_filter import user_words_filter_router
 
 dp = Dispatcher()
 bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp.include_router(admin_router)
+dp.include_router(user_words_filter_router)
 
 
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
-logging.basicConfig(level=logging.INFO)
 
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
     asyncio.run(main())

@@ -1,7 +1,7 @@
 import re  # импортируется чтобы искать строчку 12h
 from aiogram import Bot, F, Dispatcher
 from aiogram import Router
-from aiogram.types import Message
+from aiogram.types import Message, ChatPermissions
 from aiogram.filters import CommandStart, Command, CommandObject
 from typing import Any
 from aiogram.enums import ParseMode
@@ -11,6 +11,9 @@ from contextlib import suppress  # импортируем чтобы забан�
 from aiogram.exceptions import TelegramBadRequest  # для игнорирования ошибок
 from datetime import datetime, timedelta
 
+from pyexpat.errors import messages
+from pymorphy2 import MorphAnalyzer  # Устанавливается для анализа текста.
+
 from configs import ADMIN_IDS
 
 admin_router = Router()
@@ -18,7 +21,7 @@ admin_router = Router()
 admin_router.message.filter(F.chat.type.in_({'supergroup', 'group'}), F.from_user.id.in_(ADMIN_IDS))
 
 
-# функция для генераций datetime обьекта
+# Функция для генераций datetime обьекта. Прописываем перед обработчиками ban и mute так как они будут ее использовать.
 def parse_time(time_string: str | None) -> datetime | None:
     if not time_string:
         return None
@@ -26,13 +29,13 @@ def parse_time(time_string: str | None) -> datetime | None:
     match_ = re.match(r'(\d+)([a-z])',
                       time_string.lower().strip())  # \d+ , d тут значит цифры а d+ значит несколько цифр,
     current_datetime = datetime.utcnow()
-    # [a-z] будем искать все буквы от а до z
+    # [a-z] будем искать все буквы от, а до z
     if match_:
         # group(1) => 12, group(2) => h
         value, unit = int(match_.group(1)), match_.group(2)
 
         match unit:
-            # timedelta можем прибавить к нашей текущей дате, другую дату
+            # timedelta = можем прибавить к нашей текущей дате, другую дату
             case 'h':
                 time_delta = timedelta(hours=value)
             case 'd':
@@ -62,7 +65,7 @@ async def ban_cmd(message: Message, bot: Bot, command: CommandObject | None) -> 
     reply = message.reply_to_message
     # Если ответ пустой то возращяем None
     if not reply:
-        return None
+        return await message.answer('Пользователь не найден 🙅🏿')
     until_date = parse_time(command.args)  # parse_time парсит время бана, (command.args) 12 h распознает время бана
     mention = reply.from_user.mention_html(reply.from_user.first_name)
 
@@ -72,3 +75,24 @@ async def ban_cmd(message: Message, bot: Bot, command: CommandObject | None) -> 
             chat_id=message.chat.id, user_id=reply.from_user.id, until_date=until_date
         )
         await message.answer(f'😱 Пользователь <b>{mention}</b> забанили')
+
+
+# команда мут
+@admin_router.message(Command('mute'))
+async def mute_cmd(message: Message, bot: Bot, command: CommandObject | None = None) -> Any:
+    reply = message.reply_to_message
+    # Если ответ пустой то возращяем None
+    if not reply:
+        return await message.answer('Пользователь не найден 🙅🏿')
+    until_date = parse_time(command.args)  # parse_time парсит время бана, (command.args) 12 h распознает время бана
+    mention = reply.from_user.mention_html(reply.from_user.first_name)
+
+    # игнорируем ошибку при команде /ban возникает когда пытаемся забанить пользователя с правами админа
+    with suppress(TelegramBadRequest):
+        await bot.restrict_chat_member(
+            chat_id=message.chat.id,
+            user_id=reply.from_user.id,
+            until_date=until_date,
+            permissions=ChatPermissions(can_send_messages=False)
+        )
+        await message.answer(f'😱 Пользователь <b>{mention}</b> замучен')
