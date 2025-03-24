@@ -8,7 +8,7 @@ import logging
 from configs import TOKEN
 from handlers import admin_handlers
 from handlers.admin_handlers import admin_router
-from handlers.user_words_filter import user_words_filter_router
+from handlers.user_words_filter_handlers import user_words_filter_router
 
 dp = Dispatcher()
 bot = Bot(TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))

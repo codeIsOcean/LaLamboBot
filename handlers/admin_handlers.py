@@ -71,6 +71,7 @@ async def ban_cmd(message: Message, bot: Bot, command: CommandObject | None) -> 
 
     # игнорируем ошибку при команде /ban возникает когда пытаемся забанить пользователя с правами админа
     with suppress(TelegramBadRequest):
+        # блочим нарушителя
         await bot.ban_chat_member(
             chat_id=message.chat.id, user_id=reply.from_user.id, until_date=until_date
         )
@@ -84,6 +85,7 @@ async def mute_cmd(message: Message, bot: Bot, command: CommandObject | None = N
     # Если ответ пустой то возращяем None
     if not reply:
         return await message.answer('Пользователь не найден 🙅🏿')
+
     until_date = parse_time(command.args)  # parse_time парсит время бана, (command.args) 12 h распознает время бана
     mention = reply.from_user.mention_html(reply.from_user.first_name)
 
@@ -95,4 +97,5 @@ async def mute_cmd(message: Message, bot: Bot, command: CommandObject | None = N
             until_date=until_date,
             permissions=ChatPermissions(can_send_messages=False)
         )
-        await message.answer(f'😱 Пользователь <b>{mention}</b> замучен')
+        await message.answer(f'😱 Пользователь <b>{mention}</b> замучен на {until_date.strftime('%d.%m.%Y %H:%M') if
+        until_date else 'неопределенное время'} ')
