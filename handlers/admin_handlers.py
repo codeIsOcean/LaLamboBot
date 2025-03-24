@@ -97,5 +97,4 @@ async def mute_cmd(message: Message, bot: Bot, command: CommandObject | None = N
             until_date=until_date,
             permissions=ChatPermissions(can_send_messages=False)
         )
-        await message.answer(f'😱 Пользователь <b>{mention}</b> замучен на {until_date.strftime('%d.%m.%Y %H:%M') if
-        until_date else 'неопределенное время'} ')
+        await message.answer(f'😱 Пользователь <b>{mention}</b> x`
